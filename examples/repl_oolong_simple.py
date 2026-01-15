@@ -15,15 +15,21 @@ Usage:
 from __future__ import annotations
 
 import os
+import sys
+from pathlib import Path
 
 from datasets import load_dataset
 from huggingface_hub import InferenceClient
 
-# HuggingFace token for Inference API
-HF_TOKEN = os.environ.get("HF_TOKEN", None)
+# Add parent directory to sys.path
+sys.path.insert(0, str(Path.cwd().parent))
 
-from repl_env import REPLEnv
-from repl_env.prompts import (
+# HuggingFace token for Inference API
+HF_TOKEN = os.environ.get("HF_TOKEN")
+
+
+from envs.repl_env import REPLEnv
+from envs.repl_env.prompts import (
     RLM_SYSTEM_PROMPT_QWEN,  # Use Qwen version (with cost warning)
     QueryMetadata,
     build_rlm_system_prompt,
@@ -132,6 +138,8 @@ def main():
         print(f"LLM: {response[:400]}{'...' if len(response) > 400 else ''}")
 
         code_blocks = extract_code_blocks(response)
+        code_block_observations = []
+
         if not code_blocks:
             messages.append({"role": "assistant", "content": response})
             messages.append({"role": "user", "content": "Please provide code in ```repl``` blocks."})
@@ -143,6 +151,7 @@ def main():
             # Execute code - same API for both local and remote!
             result = env.execute(code)
             obs = result.observation
+            code_block_observations.append(obs)
 
             print(f"Success: {obs.result.success}")
             print(f"Env iteration: {obs.iteration}/{obs.max_iterations}")
@@ -165,7 +174,7 @@ def main():
 
         # Add assistant response and observation + next user prompt
         messages.append({"role": "assistant", "content": response})
-        observation_text = format_observation(obs)
+        observation_text = format_observation(code_block_observations)
         next_prompt = build_user_prompt(root_prompt=task_prompt, iteration=i)
         messages.append({"role": "user", "content": observation_text + "\n\n" + next_prompt["content"]})
 
