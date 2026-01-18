@@ -15,21 +15,16 @@ Usage:
 from __future__ import annotations
 
 import os
-import sys
-from pathlib import Path
 
 from datasets import load_dataset
 from huggingface_hub import InferenceClient
-
-# Add parent directory to sys.path
-sys.path.insert(0, str(Path.cwd().parent))
 
 # HuggingFace token for Inference API
 HF_TOKEN = os.environ.get("HF_TOKEN")
 
 
-from envs.repl_env import REPLEnv
-from envs.repl_env.prompts import (
+from repl_env import REPLEnv
+from repl_env.prompts import (
     RLM_SYSTEM_PROMPT_QWEN,  # Use Qwen version (with cost warning)
     QueryMetadata,
     build_rlm_system_prompt,
